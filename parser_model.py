@@ -5,13 +5,9 @@ CS224N 2018-19: Homework 3
 parser_model.py: Feed-Forward Neural Network for Dependency Parsing
 Sahil Chopra <schopra8@stanford.edu>
 """
-import pickle
-import os
-import time
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class ParserModel(nn.Module):
@@ -74,17 +70,11 @@ class ParserModel(nn.Module):
         ###     Xavier Init: https://pytorch.org/docs/stable/nn.html#torch.nn.init.xavier_uniform_
         ###     Dropout: https://pytorch.org/docs/stable/nn.html#torch.nn.Dropout
 
-        W = torch.empty(self.n_features * self.embed_size, self.hidden_size)
-        b1 = torch.empty(self.hidden_size)
-        nn.init.xavier_uniform_(W, gain=1)
-        self.embed_to_hidden = lambda x: torch.matmul(x, W) + b1
+        self.embed_to_hidden = nn.Linear(self.n_features * self.embed_size, self.hidden_size)
+        nn.init.xavier_uniform_(self.embed_to_hidden.weight)
         self.dropout = nn.Dropout(p=self.dropout_prob)
-        U = torch.empty(self.hidden_size, self.n_classes)
-        nn.init.xavier_uniform_(U, gain=1)
-        b2 = torch.empty(self.n_classes)
-        self.hidden_to_logits = lambda x: torch.matmul(x, U) + b2
-        # self.embed_to_hidden = nn.Linear(self.n_features * self.embed_size, self.hidden_size)
-        # self.hidden_to_logits = nn.Linear(self.hidden_size, self.n_classes)
+        self.hidden_to_logits = nn.Linear(self.hidden_size, self.n_classes)
+        nn.init.xavier_uniform_(self.hidden_to_logits.weight)
 
         ### END YOUR CODE
 
@@ -162,7 +152,8 @@ class ParserModel(nn.Module):
         ### END YOUR CODE
         embeddings = self.embedding_lookup(t)
         t = self.embed_to_hidden(embeddings)
-        t = nn.ReLU(t)
+        relu = nn.ReLU()
+        t = relu(t)
         t = self.dropout(t)
         logits = self.hidden_to_logits(t)
         return logits

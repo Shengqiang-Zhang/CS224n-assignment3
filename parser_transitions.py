@@ -99,6 +99,7 @@ def minibatch_parse(sentences, model, batch_size):
                                                     same as in sentences (i.e., dependencies[i] should
                                                     contain the parse for sentences[i]).
     """
+    # dependencies = [[] for s in sentences]
     dependencies = []
 
     ### YOUR CODE HERE (~8-10 Lines)
@@ -118,8 +119,9 @@ def minibatch_parse(sentences, model, batch_size):
     partial_parses = [PartialParse(sentence) for sentence in sentences]
     unfinished_parses = partial_parses
     while len(unfinished_parses) > 0:
-        batch_parses = unfinished_parses[:batch_size]
-        batch_dependencies = [[] for i in range(batch_size)]
+        cur_size = min(batch_size, len(unfinished_parses))
+        batch_parses = unfinished_parses[:cur_size]
+        batch_dependencies = [[] for i in range(cur_size)]
         pred_transitions = model.predict(batch_parses)
         copy = [parse for parse in batch_parses]
         for index, single_parse in enumerate(copy):
@@ -127,6 +129,30 @@ def minibatch_parse(sentences, model, batch_size):
             if len(single_parse.buffer) == 0 and len(single_parse.stack) == 1:
                 dependencies.append(batch_dependencies[index])
                 unfinished_parses.remove(single_parse)
+
+    # partial_parses = [PartialParse(s) for s in sentences]
+    #
+    # # create a work area (= unfinished_parses) which associates a PartialParse with the original index
+    # work = list(enumerate(partial_parses))
+    #
+    # # while there is work to do
+    # while len(work) > 0:
+    #     current_size = min(batch_size, len(work))
+    #
+    #     # build the batch of PartialParse-s to process
+    #     batch = [i[1] for i in work[0: current_size]]
+    #
+    #     #
+    #     for b, transition in enumerate(model.predict(batch)):
+    #         oneDep = batch[b].parse([transition])
+    #         sentenceNdx = work[b][0]
+    #         dependencies[sentenceNdx] = oneDep
+    #
+    #     # cleanup the parsed sentences
+    #     for i in reversed(range(0, current_size)):
+    #         head = work[i][1]
+    #         if len(head.buffer) == 0 and len(head.stack) == 1:
+    #             del work[i]
 
     ### END YOUR CODE
 
